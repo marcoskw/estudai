@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from .models import Questao
+from questao.models import Questao
 
 class Simulado(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE)

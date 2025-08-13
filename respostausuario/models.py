@@ -1,5 +1,6 @@
 from django.db import models
-from .models import Simulado, Questao
+from simulado.models import Simulado
+from questao.models import Questao
 
 class RespostaUsuario(models.Model):
     simulado = models.ForeignKey(Simulado, on_delete=models.CASCADE)

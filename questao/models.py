@@ -1,5 +1,7 @@
 from django.db import models
-from .models import Concurso, Materia, Assunto
+from concurso.models import Concurso 
+from materia.models import Materia 
+from assunto.models import Assunto
 
 class Questao(models.Model):
     OPCOES_RESPOSTA = [
