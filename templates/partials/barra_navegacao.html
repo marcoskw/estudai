@@ -1,0 +1,68 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
+    <a class="navbar-brand" href="{% url 'home' %}">
+        Estudai
+    <!--    <img src="{% static 'logo_exatron.png' %}" height="30" alt="Logo Exatron"> -->
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+        
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Início</a>
+            </li>
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Simulado
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Novo Simulado</a></li>
+                    <li><a class="dropdown-item" href="#">Histórico</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                </ul>
+            </li>
+
+            <li class="nav-item">
+                 <a class="nav-link" href="#">Menu</a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-person-fill"></i>
+                    Olá, {{ user.first_name|default:user.username }} </a>
+                <ul class="dropdown-menu dropdown-menu-end"> <li>
+                        <h6 class="dropdown-header">Administração</h6>
+                    </li>
+                    <li><a class="dropdown-item" href="#">Gerenciar Usuários</a></li>
+                    <li><a class="dropdown-item" href="#">Parâmetros do Sistema</a></li>
+                    <li><a class="dropdown-item" href="#">Formas de Pagamento</a></li>
+                    <li><a class="dropdown-item" href="#">Mensagens e Arquivos</a></li>
+                    <li><a class="dropdown-item" href="#">Range de IP</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    
+                    <li>
+                        <h6 class="dropdown-header">Sua Conta</h6>
+                    </li>
+                    <li><a class="dropdown-item" href="#">Trocar Senha</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form action="#" method="post" class="px-2">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger w-100">Sair</button>
+                        </form>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
