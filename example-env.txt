@@ -1,0 +1,5 @@
+DB_NAME=estudai
+DB_USER=estudai
+DB_PASSWORD=password
+DB_HOST=host
+DB_PORT=3306
