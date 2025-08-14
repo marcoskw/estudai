@@ -2,6 +2,7 @@ from django.db import models
 from concurso.models import Concurso 
 from materia.models import Materia 
 from assunto.models import Assunto
+from django_summernote.fields import SummernoteTextField
 
 class Questao(models.Model):
     OPCOES_RESPOSTA = [
@@ -12,12 +13,14 @@ class Questao(models.Model):
         ('E', 'E'),
     ]
 
-    enunciado = models.TextField()
-    alternativa_a = models.TextField()
-    alternativa_b = models.TextField()
-    alternativa_c = models.TextField()
-    alternativa_d = models.TextField()
-    alternativa_e = models.TextField()
+    enunciado = SummernoteTextField()
+    alternativa_a = SummernoteTextField()
+    alternativa_b = SummernoteTextField()
+    alternativa_c = SummernoteTextField()
+    alternativa_d = SummernoteTextField()
+    alternativa_e = SummernoteTextField()
+    resposta_correta = models.CharField(max_length=1, choices=OPCOES_RESPOSTA)
+    comentario_resposta = models.TextField(blank=True, null=True)
     resposta_correta = models.CharField(max_length=1, choices=OPCOES_RESPOSTA)
     comentario_resposta = models.TextField(blank=True, null=True)
     concurso = models.ForeignKey(Concurso, on_delete=models.CASCADE)
