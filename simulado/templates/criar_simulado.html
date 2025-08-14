@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block 'body' %}
+<div class="container mt-5">
+    <h1>Criar um novo simulado</h1>
+    <p class="lead">Selecione as matérias e os assuntos que você quer estudar.</p>
+
+    <form method="post" action="{% url 'criar_simulado' %}">
+        {% csrf_token %}
+        <div class="card p-4 shadow-sm">
+            <h3>1. Escolha as matérias e os assuntos</h3>
+            <div id="materias-container" class="accordion" id="materiasAccordion">
+                {% for materia in materias_com_assuntos %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-{{ materia.id }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ materia.id }}" aria-expanded="false" aria-controls="collapse-{{ materia.id }}">
+                            <div class="form-check me-3">
+                                <input class="form-check-input materia-checkbox" type="checkbox" name="materia-{{ materia.id }}" id="materia-{{ materia.id }}">
+                                <label class="form-check-label" for="materia-{{ materia.id }}">
+                                    {{ materia.nome }}
+                                </label>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapse-{{ materia.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ materia.id }}" data-bs-parent="#materiasAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex justify-content-end mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary selecionar-tudo-btn" data-materia-id="{{ materia.id }}">Selecionar Tudo</button>
+                            </div>
+                            <div class="row">
+                                {% for assunto in materia.assunto_set.all %}
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input assunto-checkbox" type="checkbox" name="assunto-{{ assunto.id }}" id="assunto-{{ assunto.id }}" data-materia-id="{{ materia.id }}">
+                                        <label class="form-check-label" for="assunto-{{ assunto.id }}">
+                                            {{ assunto.nome }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card p-4 shadow-sm mt-4">
+            <h3>2. Quantidade de questões</h3>
+            <div id="questoes-container">
+                <p class="text-muted">Selecione pelo menos um assunto para definir a quantidade de questões.</p>
+            </div>
+        </div>
+
+        <div class="card p-4 shadow-sm mt-4">
+            <h3>3. Duração do simulado</h3>
+            <div class="mb-3">
+                <label for="duracao-simulado" class="form-label">Tempo em minutos:</label>
+                <input type="number" class="form-control" id="duracao-simulado" name="duracao-simulado" min="1" max="300" value="120">
+                <small class="form-text text-muted">Defina o tempo máximo que você terá para completar o simulado (em minutos).</small>
+            </div>
+        </div>        
+
+        <button type="submit" class="btn btn-primary btn-lg mt-4">Gerar Simulado</button>
+    </form>
+</div>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const materiaCheckboxes = document.querySelectorAll('.materia-checkbox');
+        const questoesContainer = document.getElementById('questoes-container');
+
+        // Adiciona funcionalidade aos botões de "Selecionar Tudo"
+        document.querySelectorAll('.selecionar-tudo-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const materiaId = this.dataset.materiaId;
+                const assuntos = document.querySelectorAll(`.assunto-checkbox[data-materia-id="${materiaId}"]`);
+                assuntos.forEach(assunto => {
+                    assunto.checked = true;
+                });
+                // Garante que o slider apareça
+                updateSlider(materiaId, true);
+            });
+        });
+
+        // Lida com a seleção da matéria
+        materiaCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const materiaId = this.id.split('-')[1];
+                const collapseElement = document.getElementById(`collapse-${materiaId}`);
+                if (this.checked) {
+                    new bootstrap.Collapse(collapseElement, {
+                        toggle: true
+                    });
+                } else {
+                    new bootstrap.Collapse(collapseElement, {
+                        toggle: false
+                    });
+                    // Desmarca todos os assuntos se a matéria for desmarcada
+                    document.querySelectorAll(`.assunto-checkbox[data-materia-id="${materiaId}"]`).forEach(assunto => {
+                        assunto.checked = false;
+                    });
+                    updateSlider(materiaId, false);
+                }
+            });
+        });
+
+        // Lida com a seleção de assuntos individuais
+        document.querySelectorAll('.assunto-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const materiaId = this.dataset.materiaId;
+                const algumAssuntoSelecionado = document.querySelectorAll(`.assunto-checkbox[data-materia-id="${materiaId}"]:checked`).length > 0;
+                updateSlider(materiaId, algumAssuntoSelecionado);
+            });
+        });
+
+        // Função para adicionar ou remover sliders
+        function updateSlider(materiaId, shouldAdd) {
+            const existingSlider = document.getElementById(`slider-container-${materiaId}`);
+            if (shouldAdd && !existingSlider) {
+                const materiaNome = document.querySelector(`#materia-${materiaId}`).nextElementSibling.innerText;
+                const sliderHtml = `
+                    <div class="mb-3" id="slider-container-${materiaId}">
+                        <label for="slider-${materiaId}" class="form-label">${materiaNome}</label>
+                        <input type="range" class="form-range" min="1" max="50" value="10" name="questoes-${materiaId}" id="slider-${materiaId}">
+                        <p>Questões: <span id="valor-slider-${materiaId}">10</span></p>
+                    </div>
+                `;
+                questoesContainer.insertAdjacentHTML('beforeend', sliderHtml);
+                const slider = document.getElementById(`slider-${materiaId}`);
+                const valorSpan = document.getElementById(`valor-slider-${materiaId}`);
+                slider.addEventListener('input', function() {
+                    valorSpan.innerText = this.value;
+                });
+
+            } else if (!shouldAdd && existingSlider) {
+                existingSlider.remove();
+            }
+
+            // Lógica para mostrar/ocultar a mensagem inicial
+            if (questoesContainer.children.length > 1) {
+                const mensagemInicial = questoesContainer.querySelector('p.text-muted');
+                if (mensagemInicial) {
+                    mensagemInicial.remove();
+                }
+            } else if (questoesContainer.children.length === 0) {
+                 questoesContainer.innerHTML = '<p class="text-muted">Selecione pelo menos um assunto para definir a quantidade de questões.</p>';
+            }
+        }
+    });
+</script>
+{% endblock %}

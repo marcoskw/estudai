@@ -8,7 +8,7 @@
             <h1 class="display-4">Bem-vindo, {{ user.nome_completo|default:user.username }}!</h1>
             <p class="lead">Prepare-se para o seu próximo concurso. Crie um novo simulado ou continue de onde parou.</p>
             <hr class="my-4">
-            <a class="btn btn-primary btn-lg" href="#" role="button">Criar Novo Simulado</a>
+            <a class="btn btn-primary btn-lg" href="{% url "criar_simulado" %}" role="button">Criar Novo Simulado</a>
             <a class="btn btn-secondary btn-lg" href="#" role="button">Ver Histórico</a>
         {% else %}
             <h1 class="display-4">Bem-vindo ao Estudai!</h1>
