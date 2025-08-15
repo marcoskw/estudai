@@ -87,10 +87,15 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{% url "historico_simulados" %}">
                     <i class="fas fa-chart-bar me-3"></i><span>Histórico</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url "minha_conta" %}">
+                    <i class="fas fa-user me-3"></i><span>Minha Conta</span>
+                </a>
+            </li>        
             <hr class="my-2 border-secondary">
             {% if user.is_authenticated %}
             <li class="nav-item">

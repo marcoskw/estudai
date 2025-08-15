@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block 'body' %}
+<div class="container mt-5">
+    <h1>Histórico de Simulados</h1>
+    <p class="lead">Veja o seu desempenho em todos os simulados realizados.</p>
+    
+    <div class="accordion" id="historicoAccordion">
+        {% for item in historico %}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-{{ item.simulado.id }}">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ item.simulado.id }}" aria-expanded="false" aria-controls="collapse-{{ item.simulado.id }}">
+                    Simulado de {{ item.simulado.data_criacao|date:"d/m/Y H:i" }} - Nota: {{ item.nota_total|floatformat:2 }}%
+                </button>
+            </h2>
+            <div id="collapse-{{ item.simulado.id }}" class="accordion-collapse collapse" aria-labelledby="heading-{{ item.simulado.id }}" data-bs-parent="#historicoAccordion">
+                <div class="accordion-body">
+                    <p><strong>Tempo levado:</strong> {{ item.tempo_levado }} minutos</p>
+                    <p><strong>Resultados por Matéria:</strong></p>
+                    <ul class="list-group">
+                        {% for nota_materia in item.notas_por_materia %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ nota_materia.questao__materia__nome }}
+                            <span class="badge bg-primary rounded-pill">{{ nota_materia.nota_por_materia|floatformat:2 }}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="alert alert-info" role="alert">
+            Você ainda não realizou nenhum simulado. Comece agora para ver seu progresso!
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block 'body' %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Questão #{{ questao.pk }}</h1>
+        <a href="#" class="btn btn-secondary">Voltar ao simulado</a>
+    </div>
+
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="card-title">Enunciado:</h5>
+        <div class="card-text">
+            {{ questao.enunciado|safe }}
+        </div>
+        <hr>
+        <h6 class="card-subtitle mb-2 text-muted">Matéria: {{ questao.materia.nome }}</h6>
+        <h6 class="card-subtitle mb-2 text-muted">Assunto: {{ questao.assunto.nome }}</h6>
+        <h6 class="card-subtitle mb-2 text-muted">Concurso: {{ questao.concurso.nome }}</h6>
+    </div>
+
+    <div class="card p-4 shadow-sm mb-4">
+        <h5 class="card-title">Alternativas:</h5>
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item {% if questao.resposta_correta == 'A' %}bg-success text-white{% endif %}">
+                A) {{ questao.alternativa_a|safe }}
+            </li>
+            <li class="list-group-item {% if questao.resposta_correta == 'B' %}bg-success text-white{% endif %}">
+                B) {{ questao.alternativa_b|safe }}
+            </li>
+            <li class="list-group-item {% if questao.resposta_correta == 'C' %}bg-success text-white{% endif %}">
+                C) {{ questao.alternativa_c|safe }}
+            </li>
+            <li class="list-group-item {% if questao.resposta_correta == 'D' %}bg-success text-white{% endif %}">
+                D) {{ questao.alternativa_d|safe }}
+            </li>
+            <li class="list-group-item {% if questao.resposta_correta == 'E' %}bg-success text-white{% endif %}">
+                E) {{ questao.alternativa_e|safe }}
+            </li>
+        </ul>
+    </div>
+    
+    {% if questao.comentario_resposta %}
+    <div class="card p-4 shadow-sm">
+        <h5 class="card-title">Comentário da Resposta:</h5>
+        <div class="card-text">
+            {{ questao.comentario_resposta|safe }}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

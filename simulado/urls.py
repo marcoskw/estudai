@@ -5,7 +5,8 @@ urlpatterns = [
     # Simulado
     path('', views.home, name='home'),
     path('criar_simulado/', views.criar_simulado, name='criar_simulado'),
-
+    path('historico_simulados/', views.historico_simulados, name='historico_simulados'),
+    path('minha_conta/', views.minha_conta, name='minha_conta'),
 #    path('concursos/', views.lista_concursos, name='lista_concursos'),
 #    path('concursos/<int:pk>/', views.detalhes_concurso, name='detalhes_concurso'),
 #    path('simulados/criar/', views.criar_simulado, name='criar_simulado'),
