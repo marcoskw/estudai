@@ -13,12 +13,12 @@ class Questao(models.Model):
         ('E', 'E'),
     ]
 
-    enunciado = SummernoteTextField()
-    alternativa_a = SummernoteTextField()
-    alternativa_b = SummernoteTextField()
-    alternativa_c = SummernoteTextField()
-    alternativa_d = SummernoteTextField()
-    alternativa_e = SummernoteTextField()
+    enunciado = models.TextField(verbose_name='Enunciado')
+    alternativa_a = models.TextField(verbose_name='Alternativa A')
+    alternativa_b = models.TextField(verbose_name='Alternativa B')
+    alternativa_c = models.TextField(verbose_name='Alternativa C')
+    alternativa_d = models.TextField(verbose_name='Alternativa D')
+    alternativa_e = models.TextField(verbose_name='Alternativa E')
     resposta_correta = models.CharField(max_length=1, choices=OPCOES_RESPOSTA)
     comentario_resposta = models.TextField(blank=True, null=True)
     resposta_correta = models.CharField(max_length=1, choices=OPCOES_RESPOSTA)
