@@ -5,7 +5,7 @@ from .models import Questao
 @admin.register(Questao)
 class QuestaoAdmin(SummernoteModelAdmin):
     summernote_fields = (
-        'enunciado',
+        'enunciado',    
         'alternativa_a',
         'alternativa_b',
         'alternativa_c',
