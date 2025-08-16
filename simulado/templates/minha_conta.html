@@ -2,5 +2,86 @@
 {% load static %}
 
 {% block 'body' %}
-minha conta
+<div class="container mt-5">
+    <h1>Minha Conta</h1>
+    <p class="lead">Atualize suas informações pessoais e gerencie sua conta.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card p-4 shadow-sm">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    {% if user.foto_de_perfil %}
+                        <img src="{{ user.foto_de_perfil.url }}" class="img-fluid rounded-circle mb-3" alt="Foto de Perfil" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-8x text-muted mb-3"></i>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label for="{{ form.foto_de_perfil.id_for_label }}" class="form-label">Alterar foto</label>
+                        {{ form.foto_de_perfil }}
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" id="id_username" value="{{ user.username }}" disabled>
+                        <small class="form-text text-muted">O nome de usuário não pode ser alterado.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.nome_completo.id_for_label }}" class="form-label">Nome Completo</label>
+                        {{ form.nome_completo }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">E-mail</label>
+                        {{ form.email }}
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de Nascimento</label>
+                        {{ form.data_nascimento }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.uf.id_for_label }}" class="form-label">UF</label>
+                            {{ form.uf }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cidade.id_for_label }}" class="form-label">Cidade</label>
+                            {{ form.cidade }}
+                        </div>
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.foco.id_for_label }}" class="form-label">Foco (Ex: Carreira Policial)</label>
+                        {{ form.foco }}
+                    </div>
+                     <div class="mb-3">
+                        <label for="{{ form.sobre_mim.id_for_label }}" class="form-label">Sobre Mim</label>
+                        {{ form.sobre_mim }}
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-4">Salvar Alterações</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Adiciona classes do Bootstrap aos campos do formulário para um visual mais limpo.
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        form.querySelectorAll('input, select, textarea').forEach(function(field) {
+            if (field.type !== 'file' && field.type !== 'checkbox' && !field.classList.contains('form-control')) {
+                field.classList.add('form-control');
+            }
+        });
+    });
+</script>
 {% endblock %}

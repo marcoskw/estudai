@@ -7,6 +7,8 @@ from .models import Simulado
 from materia.models import Materia
 from questao.models import Questao
 from django.db.models import Count, Case, When, IntegerField, Avg
+from django.contrib import messages
+from .forms import FormularioRegistro, FormularioEdicaoUsuario
 
 # Create your views here.
 @login_required
@@ -34,7 +36,18 @@ def home(request):
 
 @login_required
 def minha_conta(request):
-    return render(request, 'minha_conta.html')
+    if request.method == 'POST':
+        # Popula o formulário com os dados enviados e os arquivos (para a foto)
+        form = FormularioEdicaoUsuario(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Seu perfil foi atualizado com sucesso!')
+            return redirect('minha_conta')
+    else:
+        # Exibe o formulário preenchido com os dados atuais do usuário
+        form = FormularioEdicaoUsuario(instance=request.user)
+        
+    return render(request, 'minha_conta.html', {'form': form})
 
 @login_required
 def historico_simulados(request):
