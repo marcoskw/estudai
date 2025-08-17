@@ -5,7 +5,7 @@ from .models import Questao
 @admin.register(Questao)
 class QuestaoAdmin(SummernoteModelAdmin):
     summernote_fields = (
-        'enunciado',    
+        'enunciado',
         'alternativa_a',
         'alternativa_b',
         'alternativa_c',
@@ -15,3 +15,6 @@ class QuestaoAdmin(SummernoteModelAdmin):
     list_display = ('id', 'concurso', 'materia', 'assunto', 'resposta_correta')
     list_filter = ('concurso', 'materia', 'assunto')
     search_fields = ('enunciado', 'concurso__nome', 'materia__nome')
+
+    class Media:
+        js = ('admin/js/admin_filtering.js',)
