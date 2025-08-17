@@ -17,7 +17,7 @@
                             <div class="form-check me-3">
                                 <input class="form-check-input materia-checkbox" type="checkbox" name="materia-{{ materia.id }}" id="materia-{{ materia.id }}">
                                 <label class="form-check-label" for="materia-{{ materia.id }}">
-                                    {{ materia.nome }}
+                                    {{ materia.nome }} <span class="badge bg-secondary">{{ materia.num_questoes }}</span>
                                 </label>
                             </div>
                         </button>
@@ -33,7 +33,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input assunto-checkbox" type="checkbox" name="assunto-{{ assunto.id }}" id="assunto-{{ assunto.id }}" data-materia-id="{{ materia.id }}">
                                         <label class="form-check-label" for="assunto-{{ assunto.id }}">
-                                            {{ assunto.nome }}
+                                            {{ assunto.nome }} <span class="badge bg-light text-dark">{{ assunto.num_questoes }}</span>
                                         </label>
                                     </div>
                                 </div>
@@ -65,8 +65,6 @@
         <button type="submit" class="btn btn-primary btn-lg mt-4">Gerar Simulado</button>
     </form>
 </div>
-
-
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

@@ -1,14 +1,15 @@
 from django.shortcuts import render
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Avg
+from django.db.models import Avg, Count, Prefetch
+from assunto.models import Assunto
 from respostausuario.models import RespostaUsuario
 from .models import Simulado
 from materia.models import Materia
 from questao.models import Questao
 from django.db.models import Count, Case, When, IntegerField, Avg
 from django.contrib import messages
-from .forms import FormularioRegistro, FormularioEdicaoUsuario
+from .forms import FormularioEdicaoUsuario
 
 # Create your views here.
 @login_required
@@ -94,8 +95,7 @@ def criar_simulado(request):
         return redirect('home')
     
     # Se o método for GET, exibe a página de criação
-    materias_com_assuntos = Materia.objects.prefetch_related('assunto_set').all().order_by('nome')
-    
+    materias_com_assuntos = Materia.objects.annotate(num_questoes=Count('questao')).prefetch_related(Prefetch('assunto_set', queryset=Assunto.objects.annotate(num_questoes=Count('questao')).order_by('nome'))).order_by('nome')
     return render(request, 'criar_simulado.html', {'materias_com_assuntos': materias_com_assuntos})
 
 @login_required
