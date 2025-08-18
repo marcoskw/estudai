@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block 'body' %}
+<div class="container mt-5">
+    <h1>Provas Cadastradas</h1>
+    <p class="lead">Navegue pelas provas disponíveis e use os filtros para encontrar o que procura.</p>
+
+    <div class="card p-4 shadow-sm mb-4">
+        <form method="get" action="{% url 'listar_provas' %}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="q" class="form-label">Pesquisar por nome</label>
+                    <input type="text" class="form-control" id="q" name="q" value="{{ query_atual }}" placeholder="Ex: Concurso Banco do Brasil">
+                </div>
+                <div class="col-md-3">
+                    <label for="instituicao" class="form-label">Instituição</label>
+                    <select class="form-select" id="instituicao" name="instituicao">
+                        <option value="">Todas</option>
+                        {% for instituicao in instituicoes %}
+                            <option value="{{ instituicao }}" {% if instituicao == instituicao_atual %}selected{% endif %}>{{ instituicao }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="ano" class="form-label">Ano</label>
+                    <select class="form-select" id="ano" name="ano">
+                        <option value="">Todos</option>
+                        {% for ano in anos %}
+                             <option value="{{ ano }}" {% if ano == ano_atual %}selected{% endif %}>{{ ano }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+                <a href="{% url 'listar_provas' %}" class="btn btn-secondary">Limpar Filtros</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="row">
+        {% for prova in provas %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ prova.concurso.nome }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ prova.concurso.instituicao }} - {{ prova.concurso.ano }}</h6>
+                    <hr>
+                    <p class="card-text">
+                        <strong>Questões disponíveis:</strong> 
+                        <span class="badge bg-primary">{{ prova.concurso.num_questoes }}</span>
+                    </p>
+                    <p class="card-text">
+                        <strong>Matérias:</strong>
+                    </p>
+                    <div>
+                        {% for materia in prova.materias %}
+                            <span class="badge bg-secondary mb-1">{{ materia }}</span>
+                        {% empty %}
+                            <span class="badge bg-light text-dark">Nenhuma matéria cadastrada</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-auto pt-3">
+                         <a href="{% url 'detalhes_prova' prova.concurso.id %}" class="btn btn-outline-primary w-100">Ver detalhes da Prova</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col">
+            <div class="alert alert-info">
+                Nenhuma prova foi encontrada com os filtros selecionados.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

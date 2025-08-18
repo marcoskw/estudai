@@ -1,9 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Avg, Count, Prefetch
 from assunto.models import Assunto
 from respostausuario.models import RespostaUsuario
+from concurso.models import Concurso
 from .models import Simulado
 from materia.models import Materia
 from questao.models import Questao
@@ -49,6 +50,77 @@ def minha_conta(request):
         form = FormularioEdicaoUsuario(instance=request.user)
         
     return render(request, 'minha_conta.html', {'form': form})
+
+@login_required
+def listar_provas(request):
+    """
+    View para listar todos os concursos (provas) com filtros.
+    """
+    # Parâmetros de busca e filtro
+    query = request.GET.get('q')
+    instituicao_filtro = request.GET.get('instituicao')
+    ano_filtro = request.GET.get('ano')
+
+    concursos = Concurso.objects.annotate(
+        num_questoes=Count('questao')
+    ).order_by('-ano', 'nome')
+
+    # Aplica os filtros se eles existirem
+    if query:
+        concursos = concursos.filter(nome__icontains=query)
+    if instituicao_filtro:
+        concursos = concursos.filter(instituicao=instituicao_filtro)
+    if ano_filtro:
+        concursos = concursos.filter(ano=ano_filtro)
+
+    provas_info = []
+    for concurso in concursos:
+        materias = Materia.objects.filter(
+            questao__concurso=concurso
+        ).distinct().values_list('nome', flat=True)
+        
+        provas_info.append({
+            'concurso': concurso,
+            'materias': list(materias),
+        })
+
+    # Busca as opções para os filtros
+    instituicoes = Concurso.objects.values_list('instituicao', flat=True).distinct().order_by('instituicao')
+    anos = Concurso.objects.values_list('ano', flat=True).distinct().order_by('-ano')
+        
+    context = {
+        'provas': provas_info,
+        'instituicoes': instituicoes,
+        'anos': anos,
+        'query_atual': query or "",
+        'instituicao_atual': instituicao_filtro or "",
+        'ano_atual': int(ano_filtro) if ano_filtro else "",
+    }
+    return render(request, 'listar_provas.html', context)
+
+@login_required
+def detalhes_prova(request, pk):
+    """
+    View para exibir os detalhes de um concurso (prova) específico.
+    """
+    concurso = get_object_or_404(Concurso, pk=pk)
+    
+    # Busca todas as questões do concurso, ordenadas por matéria
+    questoes = Questao.objects.filter(concurso=concurso).order_by('materia__nome')
+    
+    # Agrupa as questões por matéria
+    questoes_por_materia = {}
+    for questao in questoes:
+        materia = questao.materia.nome
+        if materia not in questoes_por_materia:
+            questoes_por_materia[materia] = []
+        questoes_por_materia[materia].append(questao)
+        
+    context = {
+        'concurso': concurso,
+        'questoes_por_materia': questoes_por_materia,
+    }
+    return render(request, 'detalhes_prova.html', context)
 
 @login_required
 def historico_simulados(request):

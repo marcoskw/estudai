@@ -10,7 +10,8 @@ class QuestaoAdmin(SummernoteModelAdmin):
         'alternativa_b',
         'alternativa_c',
         'alternativa_d',
-        'alternativa_e'
+        'alternativa_e',
+        'comentario_resposta',
     )
     list_display = ('id', 'concurso', 'materia', 'assunto', 'resposta_correta')
     list_filter = ('concurso', 'materia', 'assunto')

@@ -7,8 +7,9 @@ from django.db.models import Count, Case, When, IntegerField, Avg
 
 @login_required
 def get_assuntos(request, materia_id):
-    assuntos = Assunto.objects.filter(materia_id=materia_id).values('id', 'nome')
+    assuntos = Assunto.objects.filter(materia_id=materia_id).order_by('nome').values('id', 'nome')
     return JsonResponse(list(assuntos), safe=False)
+
 
 @login_required
 def visualizar_questao(request, pk):
