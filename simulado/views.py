@@ -1,16 +1,18 @@
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, render
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.db.models import Avg, Count, Prefetch
-from assunto.models import Assunto
+from django.db.models import Count, Case, When, IntegerField, Avg, Prefetch
+from django.contrib import messages
 from respostausuario.models import RespostaUsuario
+from assunto.models import Assunto
 from concurso.models import Concurso
-from .models import Simulado
+from simulado.models import Simulado
 from materia.models import Materia
 from questao.models import Questao
-from django.db.models import Count, Case, When, IntegerField, Avg
-from django.contrib import messages
-from .forms import FormularioEdicaoUsuario
+from simulado.forms import FormularioEdicaoUsuario
+
 
 # Create your views here.
 @login_required
@@ -35,6 +37,29 @@ def home(request):
         context['media_acertos'] = media_acertos
         
     return render(request, 'home.html', context)
+
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('home')
+            else:
+                messages.error(request, "Nome de usuário ou senha inválidos.")
+        else:
+            messages.error(request, "Nome de usuário ou senha inválidos.")
+    else:
+        form = AuthenticationForm()
+    return render(request, 'login.html', {'form': form})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 @login_required
 def minha_conta(request):

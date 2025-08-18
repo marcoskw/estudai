@@ -5,3 +5,4 @@ from .models import Concurso
 class ConcursoAdmin(admin.ModelAdmin):
     list_display = ('nome', 'instituicao', 'ano')
     search_fields = ('nome', 'instituicao')
+    list_filter = ('instituicao', 'ano')

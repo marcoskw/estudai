@@ -3,6 +3,11 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Personalização do Admin
+admin.site.site_header = "Painel Administrativo Estudai"
+admin.site.site_title = "Administração do Estudai"
+admin.site.index_title = "Bem-vindo ao painel de administração do Estudai"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('summernote/', include('django_summernote.urls')),
