@@ -13,25 +13,9 @@ class QuestaoAdmin(SummernoteModelAdmin):
         'alternativa_e',
         'comentario_resposta',
     )
-    list_display = ('id', 'materia', 'assunto', 'concurso', 'resposta_correta')
-    list_filter = ('materia', 'assunto', 'concurso')
+    list_display = ('id', 'concurso', 'materia', 'assunto', 'resposta_correta')
+    list_filter = ('concurso', 'materia', 'assunto')
     search_fields = ('enunciado', 'concurso__nome', 'materia__nome')
-    
-    # Adicionado para campos de busca em vez de select
-    autocomplete_fields = ['concurso', 'materia', 'assunto']
-
-    # Adicionado para organizar os campos do formulário
-    fieldsets = (
-        ('Informações Gerais', {
-            'fields': ('materia', 'assunto', 'concurso')
-        }),
-        ('Conteúdo da Questão', {
-            'fields': ('enunciado', ('alternativa_a', 'alternativa_b'), ('alternativa_c', 'alternativa_d'), 'alternativa_e')
-        }),
-        ('Gabarito e Comentários', {
-            'fields': ('resposta_correta', 'comentario_resposta')
-        }),
-    )
 
     class Media:
         js = ('admin/js/admin_filtering.js',)
