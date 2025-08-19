@@ -2,46 +2,66 @@
 
 {% block 'body' %}
 <div class="container mt-5">
-    <div class="text-center mb-5">
-        {% if user.is_authenticated %}
-            <h1 class="display-4">Bem-vindo, {{ user.nome_completo|default:user.username }}!</h1>
-            <p class="lead">Prepare-se para o seu próximo concurso. Crie um novo simulado ou continue de onde parou.</p>
-            <hr class="my-4">
-            <a class="btn btn-primary btn-lg" href="{% url "criar_simulado" %}" role="button">Criar Novo Simulado</a>
-            <a class="btn btn-secondary btn-lg" href="{% url 'historico_simulados' %}" role="button">Ver Histórico</a>
-        {% else %}
-            <h1 class="display-4">Bem-vindo ao Estudai!</h1>
-            <p class="lead">O portal de simulados que vai te ajudar a conquistar a aprovação. Faça seu login ou cadastre-se para começar.</p>
-            <hr class="my-4">
-            <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">Entrar</a>
-            <a class="btn btn-success btn-lg" href="{% url 'registrar' %}" role="button">Registrar</a>
-        {% endif %}
-    </div>
+  <div class="text-center mb-5">
+    {% if user.is_authenticated %}
+      <h1 class="display-4">Bem-vindo, {{ user.nome_completo|default:user.username }}!</h1>
+      <p class="lead">Prepare-se para o seu próximo concurso. Crie um novo simulado ou continue de onde parou.</p>
+      <hr class="my-4">
+      <a class="btn btn-primary btn-lg" href="{% url "criar_simulado" %}" role="button">Criar Novo Simulado</a>
+      <a class="btn btn-secondary btn-lg" href="{% url 'historico_simulados' %}" role="button">Ver Histórico</a>
+    {% else %}
+      <h1 class="display-4">Bem-vindo ao Estudai!</h1>
+      <p class="lead">O portal de simulados que vai te ajudar a conquistar a aprovação. Faça seu login ou cadastre-se para começar.</p>
+      <hr class="my-4">
+      <a class="btn btn-primary btn-lg" href="{% url 'login' %}" role="button">Entrar</a>
+      <a class="btn btn-success btn-lg" href="{% url 'registrar' %}" role="button">Registrar</a>
+    {% endif %}
+  </div>
 
-    <div class="row text-center">
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Total de Questões Cadastradas</h5>
-                    <p class="display-4 text-primary">{{ total_questoes }}</p>
-                    <p class="card-text">Questões de diversas áreas e concursos para você praticar.</p>
-                </div>
-            </div>
+  <div class="row text-center">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Total de Questões Cadastradas</h5>
+          <p class="display-4 text-primary">{{ total_questoes }}</p>
+          <p class="card-text">Questões de diversas áreas e concursos para você praticar.</p>
         </div>
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm h-100">
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">Sua Média de Acertos</h5>
+          {% if user.is_authenticated %}
+            <p class="display-4 text-success">{{ media_acertos|floatformat:2 }}%</p>
+            <p class="card-text">Sua média geral em todos os simulados realizados.</p>
+          {% else %}
+            <p class="display-4 text-muted">--</p>
+            <p class="card-text">Faça login para ver sua média e estatísticas.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+    
+    {% if user.is_authenticated and medias_por_materia %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title">Sua Média de Acertos</h5>
-                    {% if user.is_authenticated %}
-                        <p class="display-4 text-success">{{ media_acertos|floatformat:2 }}%</p>
-                        <p class="card-text">Sua média geral em todos os simulados realizados.</p>
-                    {% else %}
-                        <p class="display-4 text-muted">--</p>
-                        <p class="card-text">Faça login para ver sua média e estatísticas.</p>
-                    {% endif %}
+                    <h5 class="card-title text-center">Média de Acertos por Matéria</h5>
+                    <ul class="list-group list-group-flush">
+                        {% for media_materia in medias_por_materia %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ media_materia.questao__materia__nome }}
+                            <span class="badge bg-primary rounded-pill">{{ media_materia.media_materia|floatformat:2 }}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

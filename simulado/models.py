@@ -33,6 +33,7 @@ class Simulado(models.Model):
     nome = models.CharField(max_length=200)
     data_criacao = models.DateTimeField(auto_now_add=True)
     questoes = models.ManyToManyField(Questao)
+    duracao_simulado = models.IntegerField(default=120)
 
     def __str__(self):
         return f"Simulado de {self.usuario.username} - {self.nome}"

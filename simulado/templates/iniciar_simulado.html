@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block 'head' %}
+<style>
+    .timer-container {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background-color: #343a40;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 1.2rem;
+        z-index: 1000;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock 'head' %}
+
+{% block 'body' %}
+<div class="container mt-5">
+    <div class="timer-container">
+        Tempo restante: <span id="timer">--:--</span>
+    </div>
+
+    <h1>{{ simulado.nome }}</h1>
+    <p class="lead">Responda as questões abaixo e finalize quando terminar.</p>
+
+    <form method="post" action="{% url 'finalizar_simulado' pk=simulado.pk %}">
+        {% csrf_token %}
+        <div class="simulado-container">
+            {% for materia, questoes in questoes_por_materia.items %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">{{ materia }}</h4>
+                </div>
+                <div class="card-body">
+                    {% for questao in questoes %}
+                    <div class="questao mb-4">
+                        <p class="questao-enunciado"><strong>{{ forloop.parentloop.counter }}.</strong> {{ questao.enunciado|safe }}</p>
+                        <div class="alternativas">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="questao-{{ questao.pk }}" id="questao-{{ questao.pk }}-A" value="A">
+                                <label class="form-check-label" for="questao-{{ questao.pk }}-A">A) {{ questao.alternativa_a|safe }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="questao-{{ questao.pk }}" id="questao-{{ questao.pk }}-B" value="B">
+                                <label class="form-check-label" for="questao-{{ questao.pk }}-B">B) {{ questao.alternativa_b|safe }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="questao-{{ questao.pk }}" id="questao-{{ questao.pk }}-C" value="C">
+                                <label class="form-check-label" for="questao-{{ questao.pk }}-C">C) {{ questao.alternativa_c|safe }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="questao-{{ questao.pk }}" id="questao-{{ questao.pk }}-D" value="D">
+                                <label class="form-check-label" for="questao-{{ questao.pk }}-D">D) {{ questao.alternativa_d|safe }}</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="questao-{{ questao.pk }}" id="questao-{{ questao.pk }}-E" value="E">
+                                <label class="form-check-label" for="questao-{{ questao.pk }}-E">E) {{ questao.alternativa_e|safe }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg mt-4">Finalizar Simulado</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const timerElement = document.getElementById('timer');
+        const totalMinutes = {{ simulado.duracao_simulado }};
+        let timeInSeconds = totalMinutes * 60;
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeInSeconds / 60);
+            const seconds = timeInSeconds % 60;
+            timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            if (timeInSeconds <= 0) {
+                clearInterval(timerInterval);
+                alert("O tempo do simulado acabou!");
+                document.querySelector('form').submit();
+            } else {
+                timeInSeconds--;
+            }
+        }
+
+        const timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+    });
+</script>
+{% endblock %}

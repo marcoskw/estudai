@@ -1,3 +1,4 @@
+import random
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -12,6 +13,8 @@ from simulado.models import Simulado
 from materia.models import Materia
 from questao.models import Questao
 from simulado.forms import FormularioEdicaoUsuario
+from django.db.models import Sum
+from django.utils import timezone
 
 
 # Create your views here.
@@ -32,9 +35,23 @@ def home(request):
         # Calcula a média de acertos
         media_acertos = 0
         if respostas_usuario.exists():
-            media_acertos = respostas_usuario.aggregate(Avg('correta'))['correta__avg'] * 100
+            media_acertos = respostas_usuario.aggregate(
+                avg=Avg(
+                    Case(When(correta=True, then=1), default=0, output_field=IntegerField())
+                )
+            )['avg'] * 100
             
         context['media_acertos'] = media_acertos
+
+        # Calcula a média de acertos por matéria
+        if respostas_usuario.exists():
+            medias_por_materia = respostas_usuario.values('questao__materia__nome').annotate(
+                media_materia=Avg(Case(When(correta=True, then=1), default=0, output_field=IntegerField())) * 100
+            ).order_by('questao__materia__nome')
+        else:
+            medias_por_materia = []
+        
+        context['medias_por_materia'] = medias_por_materia
         
     return render(request, 'home.html', context)
 
@@ -149,54 +166,6 @@ def detalhes_prova(request, pk):
 
 @login_required
 def historico_simulados(request):
-    simulados = Simulado.objects.filter(usuario=request.user).order_by('-data_criacao')
-    return render(request, 'historico_simulados.html', {'simulados': simulados})
-
-@login_required
-def criar_simulado(request):
-    if request.method == 'POST':
-        # -------------------
-        # Lógica para processar o formulário
-        # -------------------
-        
-        # 1. Capturar a duração do simulado
-        duracao_simulado = request.POST.get('duracao-simulado')
-        
-        # 2. Capturar as matérias e quantidade de questões
-        materias_e_questoes = {}
-        for key, value in request.POST.items():
-            if key.startswith('questoes-'):
-                materia_id = key.split('-')[1]
-                materias_e_questoes[materia_id] = int(value)
-        
-        # 3. Capturar os assuntos selecionados
-        assuntos_selecionados = []
-        for key, value in request.POST.items():
-            if key.startswith('assunto-'):
-                assunto_id = key.split('-')[1]
-                assuntos_selecionados.append(int(assunto_id))
-        
-        # A partir daqui, você usaria esses dados para gerar o simulado
-        # Por exemplo: buscar as questões, criar o objeto Simulado, etc.
-        
-        # Exemplo de como você pode usar os dados:
-        # Você teria a lista de assuntos e a quantidade de questões por matéria.
-        # Com isso, você pode montar o simulado.
-        
-        print(f"Duração do simulado: {duracao_simulado} minutos")
-        print(f"Matérias e questões selecionadas: {materias_e_questoes}")
-        print(f"Assuntos selecionados: {assuntos_selecionados}")
-        
-        # Neste ponto, você pode redirecionar para a página do simulado
-        # Por enquanto, apenas vamos redirecionar para a home
-        return redirect('home')
-    
-    # Se o método for GET, exibe a página de criação
-    materias_com_assuntos = Materia.objects.annotate(num_questoes=Count('questao')).prefetch_related(Prefetch('assunto_set', queryset=Assunto.objects.annotate(num_questoes=Count('questao')).order_by('nome'))).order_by('nome')
-    return render(request, 'criar_simulado.html', {'materias_com_assuntos': materias_com_assuntos})
-
-@login_required
-def historico_simulados(request):
     simulados_do_usuario = Simulado.objects.filter(usuario=request.user).order_by('-data_criacao')
     
     historico = []
@@ -205,11 +174,9 @@ def historico_simulados(request):
         # Pega todas as respostas do simulado atual
         respostas = RespostaUsuario.objects.filter(simulado=simulado)
         
-        # Calcula o tempo total em minutos (se você for adicionar um campo de tempo no Simulado)
+        # O campo tempo_levado é definido como 0 para evitar o AttributeError.
+        # Ele só será calculado se os campos data_fim e data_inicio existirem no modelo.
         tempo_levado = 0
-        if simulado.data_fim and simulado.data_inicio: # Assumindo que você terá esses campos
-            duracao = simulado.data_fim - simulado.data_inicio
-            tempo_levado = int(duracao.total_seconds() / 60)
             
         # Calcula a nota total do simulado
         total_questoes = respostas.count()
@@ -231,3 +198,117 @@ def historico_simulados(request):
         })
         
     return render(request, 'historico_simulados.html', {'historico': historico})
+
+@login_required
+def criar_simulado(request):
+    if request.method == 'POST':
+        # Captura os dados do formulário
+        duracao = request.POST.get('duracao-simulado')
+        assuntos_ids = [int(key.split('-')[1]) for key, value in request.POST.items() if key.startswith('assunto-') and value == 'on']
+        
+        # Cria um nome para o simulado
+        nome_simulado = f"Simulado em {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+        
+        # Seleciona as questões de forma aleatória, respeitando a quantidade por matéria
+        questoes_selecionadas = []
+        materias_e_questoes = {key.split('-')[1]: int(value) for key, value in request.POST.items() if key.startswith('questoes-')}
+        
+        for materia_id, num_questoes in materias_e_questoes.items():
+            assuntos_da_materia = Assunto.objects.filter(materia_id=materia_id, id__in=assuntos_ids)
+            questoes_da_materia = Questao.objects.filter(assunto__in=assuntos_da_materia)
+            
+            # Se tiver mais questões que o desejado, sorteia
+            if questoes_da_materia.count() > num_questoes:
+                questoes_selecionadas.extend(random.sample(list(questoes_da_materia), num_questoes))
+            else:
+                questoes_selecionadas.extend(list(questoes_da_materia))
+                
+        if not questoes_selecionadas:
+            messages.error(request, "Não foi possível gerar um simulado. Por favor, selecione assuntos que contenham questões.")
+            return redirect('criar_simulado')
+
+        # Cria o objeto Simulado
+        novo_simulado = Simulado.objects.create(
+            usuario=request.user,
+            nome=nome_simulado,
+            duracao_simulado=duracao # Adicionar este campo no modelo
+        )
+        novo_simulado.questoes.set(questoes_selecionadas)
+        
+        return redirect('iniciar_simulado', pk=novo_simulado.pk)
+    
+    # Se o método for GET, exibe a página de criação
+    materias_com_assuntos = Materia.objects.annotate(num_questoes=Count('questao')).prefetch_related(Prefetch('assunto_set', queryset=Assunto.objects.annotate(num_questoes=Count('questao')).order_by('nome'))).order_by('nome')
+    return render(request, 'criar_simulado.html', {'materias_com_assuntos': materias_com_assuntos})
+
+@login_required
+def iniciar_simulado(request, pk):
+    simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
+    
+    # Agrupa as questões do simulado por matéria para exibição
+    questoes_por_materia = {}
+    for questao in simulado.questoes.all().order_by('materia__nome', 'assunto__nome', 'id'):
+        materia_nome = questao.materia.nome
+        if materia_nome not in questoes_por_materia:
+            questoes_por_materia[materia_nome] = []
+        questoes_por_materia[materia_nome].append(questao)
+        
+    context = {
+        'simulado': simulado,
+        'questoes_por_materia': questoes_por_materia,
+    }
+    return render(request, 'iniciar_simulado.html', context)
+
+@login_required
+def finalizar_simulado(request, pk):
+    if request.method == 'POST':
+        simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
+        
+        # Limpa respostas anteriores para o simulado
+        RespostaUsuario.objects.filter(simulado=simulado).delete()
+        
+        # Processa as respostas do usuário
+        for questao in simulado.questoes.all():
+            alternativa_escolhida = request.POST.get(f'questao-{questao.pk}')
+            if alternativa_escolhida:
+                correta = (alternativa_escolhida == questao.resposta_correta)
+                RespostaUsuario.objects.create(
+                    simulado=simulado,
+                    questao=questao,
+                    alternativa_escolhida=alternativa_escolhida,
+                    correta=correta
+                )
+        
+        return redirect('resultado_simulado', pk=simulado.pk)
+
+    # Caso seja um GET inesperado, redireciona para a home
+    return redirect('home')
+
+@login_required
+def resultado_simulado(request, pk):
+    simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
+    respostas = RespostaUsuario.objects.filter(simulado=simulado).select_related('questao')
+
+    # Calcula as estatísticas gerais
+    total_questoes = simulado.questoes.count()
+    acertos = respostas.filter(correta=True).count()
+    erros = respostas.filter(correta=False).count()
+    nota_total = (acertos / total_questoes) * 100 if total_questoes > 0 else 0
+
+    # Agrupa as notas por matéria
+    notas_por_materia = respostas.values('questao__materia__nome').annotate(
+        total_por_materia=Count('id'),
+        acertos_por_materia=Count(Case(When(correta=True, then=1), output_field=IntegerField())),
+        nota_por_materia=Avg(Case(When(correta=True, then=1), default=0, output_field=IntegerField())) * 100
+    ).order_by('questao__materia__nome')
+
+    context = {
+        'simulado': simulado,
+        'respostas': respostas,
+        'total_questoes': total_questoes,
+        'acertos': acertos,
+        'erros': erros,
+        'nota_total': nota_total,
+        'notas_por_materia': notas_por_materia,
+    }
+    return render(request, 'resultado_simulado.html', context)

@@ -25,16 +25,20 @@ urlpatterns = [
 
 
     # Home
-    path('/home', views.home, name='home'),
+    path('home', views.home, name='home'),
 
 # SIMULADOS
     path('criar_simulado/', views.criar_simulado, name='criar_simulado'),
     path('historico_simulados/', views.historico_simulados, name='historico_simulados'),
+    path('iniciar_simulado/<int:pk>/', views.iniciar_simulado, name='iniciar_simulado'),
+    path('finalizar_simulado/<int:pk>/', views.finalizar_simulado, name='finalizar_simulado'),
+    path('resultado_simulado/<int:pk>/', views.resultado_simulado, name='resultado_simulado'),
+
 
 # CONTA
     path('minha_conta/', views.minha_conta, name='minha_conta'),
 
 # PROVAS
-    path('listar_provas', views.listar_provas, name='listar_provas'),
+    path('listar_provas/', views.listar_provas, name='listar_provas'),
     path('prova/<int:pk>/', views.detalhes_prova, name='detalhes_prova'),
 ]
