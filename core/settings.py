@@ -156,27 +156,11 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 AUTH_USER_MODEL = 'simulado.CustomUsuario'
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST')
+EMAIL_PORT = config('EMAIL_PORT', cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-SUMMERNOTE_CONFIG = {
-    'summernote': {
-        'toolbar': [
-            ['style', ['style']],
-            ['font', ['bold', 'underline', 'clear']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['table', ['table']],
-            ['insert', ['link', 'picture', 'video']],
-            ['view', ['fullscreen', 'codeview', 'help']],
-        ],
-    },
-    'bleach_allowed_tags': [
-        'p', 'b', 'i', 'u', 'strong', 'em', 'br', 'span', 
-        'ul', 'li', 'ol', 'a', 'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'
-    ],
-    'bleach_allowed_attributes': {
-        # A linha mais importante está aqui:
-        'img': ['src', 'alt', 'style', 'width', 'height', 'class'], 
-        
-        'a': ['href', 'alt', 'title'],
-        '*': ['style', 'class'],
-    },
-}
