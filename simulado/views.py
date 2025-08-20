@@ -1,10 +1,11 @@
 import random
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import get_object_or_404, render
 from django.shortcuts import render, redirect
-from django.db.models import Count, Case, When, IntegerField, Avg, Prefetch
+from django.db.models import Count, Case, When, IntegerField, Avg, Prefetch, FloatField 
 from django.contrib import messages
 from respostausuario.models import RespostaUsuario
 from assunto.models import Assunto
@@ -20,37 +21,25 @@ from django.utils import timezone
 # Create your views here.
 @login_required
 def home(request):
-    # Quantidade total de questões no sistema
     total_questoes = Questao.objects.count()
-    
-    context = {
-        'total_questoes': total_questoes
-    }
-
-    # Se o usuário estiver autenticado, busca a média de acertos dele
+    context = {'total_questoes': total_questoes}
     if request.user.is_authenticated:
-        # Pega todas as respostas do usuário
         respostas_usuario = RespostaUsuario.objects.filter(simulado__usuario=request.user)
-        
-        # Calcula a média de acertos
         media_acertos = 0
         if respostas_usuario.exists():
+            # --- CORREÇÃO APLICADA AQUI ---
             media_acertos = respostas_usuario.aggregate(
-                avg=Avg(
-                    Case(When(correta=True, then=1), default=0, output_field=IntegerField())
-                )
+                avg=Avg(Case(When(correta=True, then=1.0), default=0.0, output_field=FloatField()))
             )['avg'] * 100
-            
         context['media_acertos'] = media_acertos
 
-        # Calcula a média de acertos por matéria
         if respostas_usuario.exists():
+            # --- CORREÇÃO APLICADA AQUI ---
             medias_por_materia = respostas_usuario.values('questao__materia__nome').annotate(
-                media_materia=Avg(Case(When(correta=True, then=1), default=0, output_field=IntegerField())) * 100
+                media_materia=Avg(Case(When(correta=True, then=1.0), default=0.0, output_field=FloatField())) * 100
             ).order_by('questao__materia__nome')
         else:
             medias_por_materia = []
-        
         context['medias_por_materia'] = medias_por_materia
         
     return render(request, 'home.html', context)
@@ -167,27 +156,21 @@ def detalhes_prova(request, pk):
 @login_required
 def historico_simulados(request):
     simulados_do_usuario = Simulado.objects.filter(usuario=request.user).order_by('-data_criacao')
-    
     historico = []
-    
     for simulado in simulados_do_usuario:
-        # Pega todas as respostas do simulado atual
         respostas = RespostaUsuario.objects.filter(simulado=simulado)
-        
-        # O campo tempo_levado é definido como 0 para evitar o AttributeError.
-        # Ele só será calculado se os campos data_fim e data_inicio existirem no modelo.
         tempo_levado = 0
+        if simulado.data_inicio and simulado.data_fim:
+            duracao = simulado.data_fim - simulado.data_inicio
+            tempo_levado = int(duracao.total_seconds() / 60)
             
-        # Calcula a nota total do simulado
         total_questoes = respostas.count()
         acertos = respostas.filter(correta=True).count()
         nota_total = (acertos / total_questoes) * 100 if total_questoes > 0 else 0
         
-        # Agrupa as notas por matéria
+        # --- CORREÇÃO APLICADA AQUI ---
         notas_por_materia = respostas.values('questao__materia__nome').annotate(
-            total_por_materia=Count('id'),
-            acertos_por_materia=Count(Case(When(correta=True, then=1), output_field=IntegerField())),
-            nota_por_materia=Avg(Case(When(correta=True, then=1), default=0, output_field=IntegerField())) * 100
+            nota_por_materia=Avg(Case(When(correta=True, then=1.0), default=0.0, output_field=FloatField())) * 100
         )
         
         historico.append({
@@ -209,7 +192,7 @@ def criar_simulado(request):
         # Cria um nome para o simulado
         nome_simulado = f"Simulado em {timezone.now().strftime('%d/%m/%Y %H:%M')}"
         
-        # Seleciona as questões de forma aleatória, respeitando a quantidade por matéria
+        # Seleciona as questões
         questoes_selecionadas = []
         materias_e_questoes = {key.split('-')[1]: int(value) for key, value in request.POST.items() if key.startswith('questoes-')}
         
@@ -217,7 +200,6 @@ def criar_simulado(request):
             assuntos_da_materia = Assunto.objects.filter(materia_id=materia_id, id__in=assuntos_ids)
             questoes_da_materia = Questao.objects.filter(assunto__in=assuntos_da_materia)
             
-            # Se tiver mais questões que o desejado, sorteia
             if questoes_da_materia.count() > num_questoes:
                 questoes_selecionadas.extend(random.sample(list(questoes_da_materia), num_questoes))
             else:
@@ -231,13 +213,14 @@ def criar_simulado(request):
         novo_simulado = Simulado.objects.create(
             usuario=request.user,
             nome=nome_simulado,
-            duracao_simulado=duracao # Adicionar este campo no modelo
+            # Converte a duração para inteiro e garante um valor padrão
+            duracao_simulado=int(duracao) if duracao else 120
         )
         novo_simulado.questoes.set(questoes_selecionadas)
         
         return redirect('iniciar_simulado', pk=novo_simulado.pk)
     
-    # Se o método for GET, exibe a página de criação
+    # Lógica do GET permanece a mesma
     materias_com_assuntos = Materia.objects.annotate(num_questoes=Count('questao')).prefetch_related(Prefetch('assunto_set', queryset=Assunto.objects.annotate(num_questoes=Count('questao')).order_by('nome'))).order_by('nome')
     return render(request, 'criar_simulado.html', {'materias_com_assuntos': materias_com_assuntos})
 
@@ -245,7 +228,11 @@ def criar_simulado(request):
 def iniciar_simulado(request, pk):
     simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
     
-    # Agrupa as questões do simulado por matéria para exibição
+    # --- LÓGICA PARA MARCAR O INÍCIO ---
+    if not simulado.data_inicio:
+        simulado.data_inicio = timezone.now()
+        simulado.save()
+    
     questoes_por_materia = {}
     for questao in simulado.questoes.all().order_by('materia__nome', 'assunto__nome', 'id'):
         materia_nome = questao.materia.nome
@@ -264,10 +251,12 @@ def finalizar_simulado(request, pk):
     if request.method == 'POST':
         simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
         
-        # Limpa respostas anteriores para o simulado
+        # --- LÓGICA PARA MARCAR O FIM ---
+        simulado.data_fim = timezone.now()
+        simulado.save()
+        
         RespostaUsuario.objects.filter(simulado=simulado).delete()
         
-        # Processa as respostas do usuário
         for questao in simulado.questoes.all():
             alternativa_escolhida = request.POST.get(f'questao-{questao.pk}')
             if alternativa_escolhida:
@@ -281,11 +270,61 @@ def finalizar_simulado(request, pk):
         
         return redirect('resultado_simulado', pk=simulado.pk)
 
-    # Caso seja um GET inesperado, redireciona para a home
     return redirect('home')
 
 @login_required
 def resultado_simulado(request, pk):
+    simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
+    respostas = RespostaUsuario.objects.filter(simulado=simulado).select_related('questao')
+
+    total_questoes = simulado.questoes.count()
+    acertos = respostas.filter(correta=True).count()
+    erros = respostas.filter(correta=False).count()
+    nota_total = (acertos / total_questoes) * 100 if total_questoes > 0 else 0
+
+    notas_por_materia = respostas.values('questao__materia__nome').annotate(
+        nota_por_materia=Avg(Case(When(correta=True, then=1.0), default=0.0, output_field=FloatField())) * 100
+    ).order_by('questao__materia__nome')
+
+    # --- LÓGICA ADICIONADA PARA O GRÁFICO ---
+    chart_labels = [item['questao__materia__nome'] for item in notas_por_materia]
+    chart_data = [round(item['nota_por_materia'], 2) for item in notas_por_materia]
+
+    context = {
+        'simulado': simulado,
+        'respostas': respostas,
+        'total_questoes': total_questoes,
+        'acertos': acertos,
+        'erros': erros,
+        'nota_total': nota_total,
+        'notas_por_materia': notas_por_materia,
+        'chart_labels': json.dumps(chart_labels), # Passa os dados como JSON
+        'chart_data': json.dumps(chart_data),     # Passa os dados como JSON
+    }
+    return render(request, 'resultado_simulado.html', context)
+    simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
+    respostas = RespostaUsuario.objects.filter(simulado=simulado).select_related('questao')
+
+    total_questoes = simulado.questoes.count()
+    acertos = respostas.filter(correta=True).count()
+    erros = respostas.filter(correta=False).count()
+    nota_total = (acertos / total_questoes) * 100 if total_questoes > 0 else 0
+
+    # --- CORREÇÃO APLICADA AQUI ---
+    notas_por_materia = respostas.values('questao__materia__nome').annotate(
+        nota_por_materia=Avg(Case(When(correta=True, then=1.0), default=0.0, output_field=FloatField())) * 100
+    ).order_by('questao__materia__nome')
+
+    context = {
+        'simulado': simulado,
+        'respostas': respostas,
+        'total_questoes': total_questoes,
+        'acertos': acertos,
+        'erros': erros,
+        'nota_total': nota_total,
+        'notas_por_materia': notas_por_materia,
+    }
+    return render(request, 'resultado_simulado.html', context)
     simulado = get_object_or_404(Simulado, pk=pk, usuario=request.user)
     respostas = RespostaUsuario.objects.filter(simulado=simulado).select_related('questao')
 
@@ -312,3 +351,26 @@ def resultado_simulado(request, pk):
         'notas_por_materia': notas_por_materia,
     }
     return render(request, 'resultado_simulado.html', context)
+    if request.method == 'POST':
+        simulado = get_object_or_404(Simulado, id=simulado_id, usuario=request.user)
+        
+        # Marca a data de fim do simulado
+        simulado.data_fim = timezone.now()
+        simulado.save()
+
+        for questao in simulado.questoes.all():
+            alternativa_escolhida = request.POST.get(f'questao_{questao.id}')
+            if alternativa_escolhida:
+                correta = alternativa_escolhida == questao.resposta_correta
+                RespostaUsuario.objects.create(
+                    simulado=simulado,
+                    questao=questao,
+                    alternativa_escolhida=alternativa_escolhida,
+                    correta=correta
+                )
+        
+        # Redireciona para a página de histórico após salvar
+        messages.success(request, "Simulado finalizado com sucesso! Confira seu desempenho.")
+        return redirect('historico_simulados')
+        
+    return redirect('home') # Se não for POST, redireciona para a home

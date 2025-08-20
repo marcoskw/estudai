@@ -99,8 +99,8 @@
 
 <script>
     const ctx = document.getElementById('myChart');
-    const labels = [{% for nota in notas_por_materia %}'{{ nota.questao__materia__nome }}',{% endfor %}];
-    const data = [{% for nota in notas_por_materia %}{{ nota.nota_por_materia|floatformat:2 }},{% endfor %}];
+    const labels = {{ chart_labels|safe }};
+    const data = {{ chart_data|safe }};
 
     new Chart(ctx, {
         type: 'bar',
