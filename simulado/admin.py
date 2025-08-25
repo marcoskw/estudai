@@ -22,25 +22,32 @@ class RespostaUsuarioAdmin(admin.ModelAdmin):
 class SimuladoAdmin(admin.ModelAdmin):
     list_display = ('usuario', 'nome', 'data_criacao')
     list_filter = ('usuario', 'data_criacao')
-    inlines = [RespostaUsuarioInline]
+
 
 @admin.register(CustomUsuario)
 class CustomUsuarioAdmin(UserAdmin):
     add_form = FormularioRegistro
     form = FormularioEdicaoUsuario
     model = CustomUsuario
-    
-    # Define quais campos aparecerão na lista de usuários
     list_display = (
-        'username', 'email', 'nome_completo', 'uf', 'cidade', 'is_staff'
+        'username', 'email', 'nome_completo', 'is_staff'
     )
-    
-    # Define os campos que aparecerão ao editar um usuário existente
-    fieldsets = UserAdmin.fieldsets + (
-        ('Informações Pessoais', {'fields': ('nome_completo', 'foto_de_perfil', 'uf', 'cidade', 'data_nascimento', 'foco', 'sobre_mim', 'media',)}),
+
+    # Fieldsets para a página de EDIÇÃO de um usuário
+    fieldsets = (
+        (None, {'fields': ('username', 'email')}),
+        ('Informações Pessoais', {'fields': ('nome_completo', 'foto_de_perfil', 'uf', 'cidade', 'data_nascimento', 'foco', 'sobre_mim', 'media')}),
+        ('Permissões', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Datas Importantes', {'fields': ('last_login', 'date_joined')}),
     )
-    
-    # Define os campos que aparecerão ao adicionar um novo usuário
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Informações Pessoais', {'fields': ('nome_completo', 'foto_de_perfil', 'uf', 'cidade', 'data_nascimento', 'foco', 'sobre_mim',)}),
+
+    # Fieldsets para a página de CRIAÇÃO de um novo usuário (sincronizado com o FormularioRegistro)
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'password', 'password2'),
+        }),
+        ('Informações Pessoais', {
+            'fields': ('nome_completo', 'foto_de_perfil', 'uf', 'cidade', 'data_nascimento', 'foco', 'sobre_mim',)
+        }),
     )

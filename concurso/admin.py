@@ -3,6 +3,6 @@ from .models import Concurso
 
 @admin.register(Concurso)
 class ConcursoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'instituicao', 'ano')
-    search_fields = ('nome', 'instituicao')
+    list_display = ('orgao', 'cargo', 'instituicao', 'ano') 
+    search_fields = ('orgao', 'cargo', 'instituicao') 
     list_filter = ('instituicao', 'ano')
