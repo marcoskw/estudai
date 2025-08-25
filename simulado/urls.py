@@ -8,7 +8,8 @@ urlpatterns = [
     # Autenticação
     path('', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-
+    path('registrar/', views.registrar_view, name='registrar'),
+    
     # URLs de Recuperação de Senha
     path('password_reset/', 
          auth_views.PasswordResetView.as_view(template_name='password_reset_form.html'), 

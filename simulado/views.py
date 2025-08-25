@@ -16,7 +16,7 @@ from questao.models import Questao
 from simulado.forms import FormularioEdicaoUsuario
 from django.db.models import Sum
 from django.utils import timezone
-
+from simulado.forms import FormularioEdicaoUsuario, FormularioRegistro
 
 # Create your views here.
 @login_required
@@ -271,6 +271,22 @@ def finalizar_simulado(request, pk):
         return redirect('resultado_simulado', pk=simulado.pk)
 
     return redirect('home')
+
+def registrar_view(request):
+    if request.method == 'POST':
+        form = FormularioRegistro(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Registro realizado com sucesso!")
+            return redirect('home')
+        else:
+            # Se o formulário for inválido, as mensagens de erro serão passadas para o template
+            pass
+    else:
+        form = FormularioRegistro()
+        
+    return render(request, 'registrar.html', {'form': form})
 
 @login_required
 def resultado_simulado(request, pk):
