@@ -26,4 +26,4 @@ class Questao(models.Model):
     assunto = models.ForeignKey(Assunto, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"Questão {self.id} de {self.concurso.nome}"
+        return f"Questão {self.id} de {self.concurso.orgao} - {self.concurso.cargo}"

@@ -17,6 +17,7 @@ from simulado.forms import FormularioEdicaoUsuario
 from django.db.models import Sum
 from django.utils import timezone
 from simulado.forms import FormularioEdicaoUsuario, FormularioRegistro
+from django.db.models import Q
 
 # Create your views here.
 @login_required
@@ -87,18 +88,22 @@ def listar_provas(request):
     """
     View para listar todos os concursos (provas) com filtros.
     """
-    # Parâmetros de busca e filtro
     query = request.GET.get('q')
     instituicao_filtro = request.GET.get('instituicao')
     ano_filtro = request.GET.get('ano')
 
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Ordena por 'orgao' em vez de 'nome'
     concursos = Concurso.objects.annotate(
         num_questoes=Count('questao')
-    ).order_by('-ano', 'nome')
+    ).order_by('-ano', 'orgao')
 
     # Aplica os filtros se eles existirem
     if query:
-        concursos = concursos.filter(nome__icontains=query)
+        # Busca tanto no órgão quanto no cargo
+        concursos = concursos.filter(
+            Q(orgao__icontains=query) | Q(cargo__icontains=query)
+        )
     if instituicao_filtro:
         concursos = concursos.filter(instituicao=instituicao_filtro)
     if ano_filtro:
@@ -115,7 +120,6 @@ def listar_provas(request):
             'materias': list(materias),
         })
 
-    # Busca as opções para os filtros
     instituicoes = Concurso.objects.values_list('instituicao', flat=True).distinct().order_by('instituicao')
     anos = Concurso.objects.values_list('ano', flat=True).distinct().order_by('-ano')
         

@@ -15,7 +15,6 @@ class QuestaoAdmin(SummernoteModelAdmin):
     )
     list_display = ('id', 'concurso', 'materia', 'assunto', 'resposta_correta')
     list_filter = ('concurso', 'materia', 'assunto')
-    search_fields = ('enunciado', 'concurso__nome', 'materia__nome')
-
+    search_fields = ('enunciado', 'concurso__orgao', 'concurso__cargo', 'materia__nome')
     class Media:
         js = ('admin/js/admin_filtering.js',)
